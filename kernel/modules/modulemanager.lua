@@ -20,22 +20,11 @@ mm.createModuleDescriptor = function()
 end
 
 mm.loadModule = function(moduleLoader, loaderContext)
-    if type(moduleLoader) ~= "table" then
-        error("Invalid arguments")
-    end
-
-    if type(kernel) ~= "table" then
-        error("Bad kernel root reference")
-    end
-
-    if type(moduleLoader.create) ~= "function" then
-        error("Bad module loader object")
-    end
+    kernel.assert.type(moduleLoader, "table", "Invalid arguments")
+    kernel.assert.type(moduleLoader.create, "function", "Bad module loader object")
 
     if loaderContext then
-        if type(loaderContext) ~= "table" then
-            error("Bad loader context")
-        end
+        kernel.assert.type(loaderContext, "table", "Bad loader context")
     end
 
     local moduleObject = mm.createModuleDescriptor()
@@ -49,13 +38,10 @@ mm.loadModule = function(moduleLoader, loaderContext)
     -- Protect the descriptor from tampering
     moduleObject.descriptor = protect.setreadonly(moduleObject.descriptor)
 
-    if type(moduleObject.descriptor.init_module) ~= "function" or type(moduleObject.descriptor.destroy_module) ~= "function" then
-        error("Loader specified a bad entry point")
-    end
-
-    if type(moduleObject.descriptor.name) ~= "string" or #moduleObject.descriptor.name == 0 then
-        error("Loader specified an invalid module name")
-    end
+    kernel.assert.type(moduleObject.descriptor.init_module, "function", "Loader specified a bad entry point")
+    kernel.assert.type(moduleObject.descriptor.destroy_module, "function", "Loader specified a bad entry point")
+    kernel.assert.type(moduleObject.descriptor.name, "string", "Loader specified an invalid module name")
+    if #moduleObject.descriptor.name == 0 then error("Loader specified an invalid module name") end
 
     if mm.loadedModules[moduleObject.descriptor.name] then
         error("Module with this name is already loaded")
@@ -73,18 +59,10 @@ mm.loadModule = function(moduleLoader, loaderContext)
 end
 
 mm.loadstringModule = function(moduleString, moduleContext)
-    if type(moduleString) ~= "string" then
-        error("Invalid arguments")
-    end
-
-    if type(kernel) ~= "table" then
-        error("Bad kernel root reference")
-    end
+    kernel.assert.type(moduleString, "string", "Invalid arguments")
 
     if moduleContext then
-        if type(moduleContext) ~= "table" then
-            error("Bad module context")
-        end
+        kernel.assert.type(moduleContext, "table", "Bad module context")
     end
 
     local protect = kernel.protect
@@ -98,21 +76,16 @@ mm.loadstringModule = function(moduleString, moduleContext)
 end
 
 mm.unloadModule = function(moduleName, force)
-    if type(moduleName) ~= "string" or #moduleName == 0 then
+    kernel.assert.type(moduleName, "string", "Invalid arguments")
+    if #moduleName == 0 then
         error("Invalid arguments")
     end
 
     if force ~= nil then
-        if type(force) ~= "boolean" then
-            error("Invalid arguments")
-        end
+        kernel.assert.type(force, "boolean", "Invalid arguments")
     end
 
     local forceUnload = force or false
-
-    if type(kernel) ~= "table" then
-        error("Bad kernel root reference")
-    end
 
     if not mm.loadedModules[moduleName] then
         error("Module is not loaded")
@@ -127,6 +100,16 @@ mm.unloadModule = function(moduleName, force)
     end
 
     mm.loadedModules[moduleName] = nil
+end
+
+mm.getModule = function(moduleName)
+    kernel.assert.type(moduleName, "string", "Invalid arguments")
+    
+    if not mm.loadedModules[moduleName] then
+        error("Module is not loaded")
+    end
+
+    return mm.loadedModules[moduleName]
 end
 
 mm.getLoadedModuleNames = function()
@@ -145,6 +128,10 @@ mm.create = function(kernel_ref)
 
     if type(kernel_ref.protect) ~= "table" then
         error("Dependencies not met, missing protect module")
+    end
+
+    if type(kernel_ref.assert) ~= "table" then
+        error("Dependencies not met, missing assert")
     end
 
     kernel = kernel_ref

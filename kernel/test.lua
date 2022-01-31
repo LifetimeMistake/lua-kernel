@@ -11,6 +11,7 @@ local function loadKernelAPI(file)
 end
 
 local protect = loadKernelAPI("kernel/protect.lua")
+local assert = loadKernelAPI("kernel/assert.lua")
 local modulemanager = loadKernelAPI("kernel/modules/modulemanager.lua")
 local moduleString = readFile("kernel/modules/char/dummy.lua")
 
@@ -19,7 +20,7 @@ local function printLoadedModules()
         print(k,v)
     end
 end
-
+--[[
 print("Protect namespace:")
 for k,v in pairs(protect) do
     print(k,v)
@@ -29,10 +30,20 @@ print("Module Manager namespace:")
 for k,v in pairs(modulemanager) do
     print(k,v)
 end
-
+]]--
 
 -- Global kernel struct
 local kernel = {
     protect = protect,
+    assert = assert,
     modulemanager = modulemanager
 }
+
+
+local testTable = {}
+testTable.a = "a"
+testTable.b = 2
+
+local protected = protect.setreadonly(testTable, true)
+protected = protect.setreadonly(protected, false)
+protected.a = 1

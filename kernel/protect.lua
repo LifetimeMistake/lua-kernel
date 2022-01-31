@@ -87,7 +87,11 @@ protect.loadstringSandbox = function(string, context)
 end
 
 protect.setreadonly = function(table)
-    if type(rawset) ~= "function" or type(setmetatable) ~= "function" then
+    if type(table) ~= "table" then
+        error("Invalid arguments")
+    end
+
+    if type(setmetatable) ~= "function" then
         error("The current execution context had insufficient privileges")
     end
 
@@ -98,11 +102,11 @@ protect.setreadonly = function(table)
         end,
         __newindex = function(t,k,v)
             error("Cannot write to a protected table")
-        end
+        end,
+        __metatable = "protected"
     }
 
     setmetatable(_table, mt)
-    rawset(_table, "__metatable", mt)
     return _table
 end
 
