@@ -121,6 +121,10 @@ mm.getLoadedModuleNames = function()
     return moduleNames
 end
 
+mm.getLoadedModules = function()
+    return mm.loadedModules
+end
+
 mm.create = function(kernel_ref)
     if type(kernel_ref) ~= "table" then
         error("Bad kernel root reference")

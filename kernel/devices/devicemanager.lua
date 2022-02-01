@@ -29,27 +29,29 @@ dm.isDeviceRegistered = function(majorNumber, minorNumber)
     return true
 end
 
-dm.createDevice = function(deviceStruct)
-    kernel.assert.type(deviceStruct, "table", "Invalid arguments")
+dm.createDevice = function(majorNumber, minorNumber, name)
+    kernel.assert.type(majorNumber, "number", "Invalid arguments")
+    kernel.assert.type(minorNumber, "number", "Invalid arguments")
+    kernel.assert.type(name, "string", "Invalid arguments")
 
-    kernel.assert.type(deviceStruct.majorNumber, "number", "Bad device struct")
-    kernel.assert.type(deviceStruct.minorNumber, "number", "Bad device struct")
-    kernel.assert.type(deviceStruct.name, "string", "Bad device struct")
-
-    if #deviceStruct.name == 0 then
-        error("Bad device struct")
+    if #name == 0 then
+        error("Invalid arguments")
     end
 
-    if dm.isDeviceRegistered(deviceStruct.majorNumber, deviceStruct.minorNumber) then
+    if dm.isDeviceRegistered(majorNumber, minorNumber) then
         error("Device is already registered")
     end
 
-    local deviceClass = dm.devices[deviceStruct.majorNumber]
-    if not deviceClass then
-        dm.devices[deviceStruct.majorNumber] = {}
+    if not dm.devices[majorNumber] then
+        dm.devices[majorNumber] = {}
     end
 
-    deviceClass[deviceStruct.minorNumber] = deviceStruct
+    local deviceStruct = dm.createDeviceDescriptor()
+    deviceStruct.majorNumber = majorNumber
+    deviceStruct.minorNumber = minorNumber
+    deviceStruct.name = name
+
+    dm.devices[majorNumber][minorNumber] = deviceStruct
 end
 
 dm.getDevice = function(majorNumber, minorNumber)
@@ -61,26 +63,6 @@ dm.getDevice = function(majorNumber, minorNumber)
     end
 
     return dm.devices[majorNumber][minorNumber]
-end
-
-dm.createCharDevice = function(majorNumber, minorNumber, name)
-    local charDevice = dm.createDeviceDescriptor()
-    charDevice.majorNumber = majorNumber
-    charDevice.minorNumber = minorNumber
-    charDevice.name = name
-
-    dm.createDevice(charDevice)
-
-    local charOperations = {
-        open = nil,
-        read = nil,
-        write = nil,
-        flush = nil,
-        release = nil,
-        ioctl = nil
-    }
-
-    return charOperations
 end
 
 dm.initCharDevice = function(majorNumber, minorNumber, charOperations)
@@ -98,8 +80,8 @@ dm.initCharDevice = function(majorNumber, minorNumber, charOperations)
 
     local device = dm.getDevice(majorNumber, minorNumber)
     local protect = kernel.protect
-    local charOpsProtected = protect.setreadonly(charOperations)
-    device.charOperations = charOpsProtected
+    device.charOperations = protect.setreadonly(charOperations)
+    dm.devices[majorNumber][minorNumber] = protect.setreadonly(device)
 end
 
 dm.deleteDevice = function(majorNumber, minorNumber)
@@ -111,6 +93,15 @@ dm.deleteDevice = function(majorNumber, minorNumber)
     end
 
     dm.devices[majorNumber][minorNumber] = nil
+end
+
+dm.getDevices = function()
+    return dm.devices
+end
+
+dm.getDevicesByClass = function(majorNumber)
+    kernel.assert.type(majorNumber, "number", "Invalid arguments")
+    return dm.devices[majorNumber]
 end
 
 dm.create = function(kernel_ref)

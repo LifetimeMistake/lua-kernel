@@ -13,6 +13,7 @@ end
 local protect = loadKernelAPI("kernel/protect.lua")
 local assert = loadKernelAPI("kernel/assert.lua")
 local modulemanager = loadKernelAPI("kernel/modules/modulemanager.lua")
+local devicemanager = loadKernelAPI("kernel/devices/devicemanager.lua")
 local moduleString = readFile("kernel/modules/char/dummy.lua")
 
 local function printLoadedModules()
@@ -36,14 +37,6 @@ end
 local kernel = {
     protect = protect,
     assert = assert,
-    modulemanager = modulemanager
+    modulemanager = modulemanager,
+    devicemanager = devicemanager
 }
-
-
-local testTable = {}
-testTable.a = "a"
-testTable.b = 2
-
-local protected = protect.setreadonly(testTable, true)
-protected = protect.setreadonly(protected, false)
-protected.a = 1
