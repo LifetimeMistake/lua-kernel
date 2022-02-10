@@ -1,0 +1,6 @@
+open(device, fd) -> nil
+release(device, fd) -> nil
+read(device, fd, count, offset) -> (string)data, (number)actual_bytes_read
+write(device, fd, data, count, offset) -> (number)actual_bytes_written
+flush(device, fd) -> (number)bytes_flushed
+ioctl(device, command, argument) -> nil

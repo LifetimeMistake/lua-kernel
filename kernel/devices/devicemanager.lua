@@ -1,3 +1,6 @@
+local required_charOperations = { "open", "release" }
+local required_fsOperations = { "openFile", "releaseFile", "getFileMetadata", "listDirectory" }
+
 local kernel = nil
 local dm = {}
 dm.devices = {}
@@ -7,7 +10,9 @@ dm.createDeviceDescriptor = function()
         majorNumber = nil,
         minorNumber = nil,
         name = nil,
-        charOperations = nil -- left for visual studio to index
+        ownerModule = nil,
+        charOperations = nil, -- left for visual studio to index
+        fsOperations = nil -- left for visual studio to index
     }
 
     return device
@@ -29,7 +34,7 @@ dm.isDeviceRegistered = function(majorNumber, minorNumber)
     return true
 end
 
-dm.createDevice = function(majorNumber, minorNumber, name)
+dm.createDevice = function(majorNumber, minorNumber, name, ownerModule)
     kernel.assert.type(majorNumber, "number", "Invalid arguments")
     kernel.assert.type(minorNumber, "number", "Invalid arguments")
     kernel.assert.type(name, "string", "Invalid arguments")
@@ -50,6 +55,7 @@ dm.createDevice = function(majorNumber, minorNumber, name)
     deviceStruct.majorNumber = majorNumber
     deviceStruct.minorNumber = minorNumber
     deviceStruct.name = name
+    deviceStruct.ownerModule = ownerModule
 
     dm.devices[majorNumber][minorNumber] = deviceStruct
 end
@@ -74,13 +80,32 @@ dm.initCharDevice = function(majorNumber, minorNumber, charOperations)
         kernel.assert.type(v, "function", "Bad char operations table")
     end
 
-    -- A device must implement at least open and release system calls
-    kernel.assert.type(charOperations.open, "function", "Bad char operations table")
-    kernel.assert.type(charOperations.release, "function", "Bad char operations table")
+    for operation in required_charOperations do
+        kernel.assert.type(charOperations[operation], "function", "Bad char operations table: driver needs to implement function " .. operation)
+    end
 
     local device = dm.getDevice(majorNumber, minorNumber)
     local protect = kernel.protect
     device.charOperations = protect.setreadonly(charOperations)
+    dm.devices[majorNumber][minorNumber] = protect.setreadonly(device)
+end
+
+dm.initFsDevice = function(majorNumber, minorNumber, fsOperations)
+    kernel.assert.type(majorNumber, "number", "Invalid arguments")
+    kernel.assert.type(minorNumber, "number", "Invalid arguments")
+    kernel.assert.type(fsOperations, "table", "Invalid arguments")
+
+    for k,v in pairs(fsOperations) do
+        kernel.assert.type(v, "function", "Bad fs operations table")
+    end
+
+    for operation in required_fsOperations do
+        kernel.assert.type(fsOperations[operation], "function", "Bad char operations table: driver needs to implement function " .. operation)
+    end
+
+    local device = dm.getDevice(majorNumber, minorNumber)
+    local protect = kernel.protect
+    device.fsOperations = protect.setreadonly(fsOperations)
     dm.devices[majorNumber][minorNumber] = protect.setreadonly(device)
 end
 
