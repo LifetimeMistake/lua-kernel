@@ -102,6 +102,7 @@ mm.unloadModule = function(moduleName, force)
     mm.loadedModules[moduleName] = nil
 end
 
+-- Returns module if loaded
 mm.getModule = function(moduleName)
     kernel.assert.type(moduleName, "string", "Invalid arguments")
     
@@ -111,7 +112,7 @@ mm.getModule = function(moduleName)
 
     return mm.loadedModules[moduleName]
 end
-
+-- Returns module names in table
 mm.getLoadedModuleNames = function()
     local moduleNames = {}
     for k,v in pairs(mm.loadedModules) do
@@ -121,6 +122,7 @@ mm.getLoadedModuleNames = function()
     return moduleNames
 end
 
+-- Returns loaded modules
 mm.getLoadedModules = function()
     return mm.loadedModules
 end

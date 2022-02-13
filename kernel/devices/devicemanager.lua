@@ -18,6 +18,7 @@ dm.createDeviceDescriptor = function()
     return device
 end
 
+-- Returns bool
 dm.isDeviceRegistered = function(majorNumber, minorNumber)
     kernel.assert.type(majorNumber, "number", "Invalid arguments")
     kernel.assert.type(minorNumber, "number", "Invalid arguments")
@@ -34,6 +35,7 @@ dm.isDeviceRegistered = function(majorNumber, minorNumber)
     return true
 end
 
+-- Creates device with given parameters
 dm.createDevice = function(majorNumber, minorNumber, name, ownerModule)
     kernel.assert.type(majorNumber, "number", "Invalid arguments")
     kernel.assert.type(minorNumber, "number", "Invalid arguments")
@@ -60,6 +62,8 @@ dm.createDevice = function(majorNumber, minorNumber, name, ownerModule)
     dm.devices[majorNumber][minorNumber] = deviceStruct
 end
 
+
+-- Returns device
 dm.getDevice = function(majorNumber, minorNumber)
     kernel.assert.type(majorNumber, "number", "Invalid arguments")
     kernel.assert.type(minorNumber, "number", "Invalid arguments")
@@ -71,6 +75,8 @@ dm.getDevice = function(majorNumber, minorNumber)
     return dm.devices[majorNumber][minorNumber]
 end
 
+
+-- Initializes character device with given arguments
 dm.initCharDevice = function(majorNumber, minorNumber, charOperations)
     kernel.assert.type(majorNumber, "number", "Invalid arguments")
     kernel.assert.type(minorNumber, "number", "Invalid arguments")
@@ -90,6 +96,8 @@ dm.initCharDevice = function(majorNumber, minorNumber, charOperations)
     dm.devices[majorNumber][minorNumber] = protect.setreadonly(device)
 end
 
+
+-- Initializes filesystem device with given arguments
 dm.initFsDevice = function(majorNumber, minorNumber, fsOperations)
     kernel.assert.type(majorNumber, "number", "Invalid arguments")
     kernel.assert.type(minorNumber, "number", "Invalid arguments")
@@ -109,6 +117,7 @@ dm.initFsDevice = function(majorNumber, minorNumber, fsOperations)
     dm.devices[majorNumber][minorNumber] = protect.setreadonly(device)
 end
 
+-- Deletes device with given MjN and MiN
 dm.deleteDevice = function(majorNumber, minorNumber)
     kernel.assert.type(majorNumber, "number", "Invalid arguments")
     kernel.assert.type(minorNumber, "number", "Invalid arguments")
@@ -120,10 +129,12 @@ dm.deleteDevice = function(majorNumber, minorNumber)
     dm.devices[majorNumber][minorNumber] = nil
 end
 
+-- Returns devices
 dm.getDevices = function()
     return dm.devices
 end
 
+-- Returns devices with given MjN
 dm.getDevicesByClass = function(majorNumber)
     kernel.assert.type(majorNumber, "number", "Invalid arguments")
     return dm.devices[majorNumber]

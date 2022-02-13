@@ -14,6 +14,7 @@ vfs.nodeTypes = {
     FILESYSTEM  = 1
 }
 
+-- Returns node with given path
 vfs.getNode = function(path)
     kernel.assert.type(path, "string", "Invalid arguments")
     if vfs.nodes[path] ~= nil then
@@ -22,6 +23,7 @@ vfs.getNode = function(path)
     error("Node not found")
 end
 
+-- Returns bool based on existance of file descriptor
 vfs.isFileInUse = function (path)
     for _,v in pairs(vfs.fileDescriptors) do
         if v.path == path then
@@ -32,6 +34,7 @@ vfs.isFileInUse = function (path)
 end
 
 -- Expect to hate me cause this thing is pain
+-- Returns bool based on existance of exclusive file descriptor for given path
 vfs.isFileLocked = function (path)
     for _,v in pairs(vfs.fileDescriptors) do
         if path == v.path then 
@@ -160,11 +163,13 @@ vfs.deleteNode = function(path)
 
 end
 
+-- No further explanation
 vfs.deleteDescriptor = function (id)
     kernel.assert.type(id, "number", "Invalid arguments")
     vfs.fileDescriptors[id] = nil
 end
 
+-- returns a bool based on existance of node with given path
 vfs.fileExists = function(path)
     kernel.assert.type(path, "string", "Invalid arguments")
 
