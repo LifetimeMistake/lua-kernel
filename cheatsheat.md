@@ -88,7 +88,8 @@ vfs.isFileLocked(path)
 -- { id = path }
 vfs.getDescriptorId(path)
 
--- Creates file descriptor, returns error if exclusive file descriptor for file exists, or you want to generate a exclusive file descriptor for already busy file.
+-- Creates file descriptor, returns error if exclusive file descriptor for file exists,
+-- or if you want to generate a exclusive file descriptor for already busy file.
 -- path = file
 -- mode = vfs.fileModes
 -- exclusive = bool
@@ -99,7 +100,7 @@ vfs.createFileDescriptor(path, mode, exclusive)
 vfs.createNode(path, type, device_majorNumber, device_minorNumber)
 
 -- If file exists and is not in use, dispose of it
-vfs.deleteNode = function(path)
+vfs.deleteNode(path)
 
 -- No further explanation
 vfs.deleteDescriptor(id)
