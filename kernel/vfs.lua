@@ -2,7 +2,8 @@ local kernel = nil
 local vfs = {}
 vfs.nodes = {}           -- path
 vfs.fileDescriptors = {} -- id
-vfs.mountpoints = {}     -- for later 
+-- vfs.mountpoints = {}     -- for later 
+-- vfs.ex_fileDescriptors = {} -- exclusive file descryptors waiting for performance update
 vfs.fileModes = {
     READONLY = 0,
     WRITEONLY = 1,
@@ -27,7 +28,6 @@ vfs.isFileInUse = function (path)
             return true
         end
     end
-
     return false
 end
 
@@ -44,12 +44,17 @@ vfs.isFileLocked = function (path)
     return false
 end
 
---[[ 
-rember to add later.
-vfs.getPathInfo = function(path)
-
+-- Basicaly a helper function to get fileDescriptor id's for given path.
+vfs.getDescriptorId = function (path)
+    local id = {}
+    for _,v in pairs(vfs.fileDescriptors) do
+        if v.path == path then
+            id[v.id] = v.path
+        end
+    end
+    return id
 end
-]]
+
 
 -- path = file |
 -- mode = vfs.fileModes |
@@ -70,6 +75,17 @@ vfs.createFileDescriptor = function (path, mode, exclusive)
     if not mode_exists then
         error("Invalid file descriptor mode")
     end
+
+    if exclusive then
+        if vfs.isFileInUse(path) then
+            error("Cannot make already active descriptor excluisive")
+        end
+    end
+
+    if vfs.isFileLocked(path) then
+        error("File belongs to exclusive fileDescriptor")
+    end
+    -- Check for any other exclusive fileDescriptors
     
     -- if needed, make some type of algorithm to find free spaces, problems my occur for larger amounts of open files.
     local id = 0
@@ -88,7 +104,9 @@ vfs.createFileDescriptor = function (path, mode, exclusive)
         exclusive = exclusive
     }
 
+    fileDescriptor = kernel.protect.setreadonly(fileDescriptor)
     vfs.fileDescriptors[id] = fileDescriptor
+    return id
 end
 
 -- type c - character | type fs - filesystem | Path - String | DMJN, DMIN - int
@@ -121,6 +139,7 @@ vfs.createNode = function(path, type, device_majorNumber, device_minorNumber)
     }
 
     vfs.nodes[path] = node
+    return node
 end
 
 -- If file exists and is not in use we dispose of it by changing it to nil.
@@ -165,7 +184,14 @@ vfs.create = function(kernel_ref)
         error("Dependencies not met, missing assert")
     end
 
+    if type(kernel_ref.protect) ~= "table" then
+        error("Dependencies not met, missing protect")
+    end
+
     kernel = kernel_ref
+
+    --vfs.fileModes = kernel.protect.setreadonly(vfs.fileModes)
+    --vfs.nodeTypes = kernel.protect.setreadonly(vfs.nodeTypes)
 end
 
 return vfs

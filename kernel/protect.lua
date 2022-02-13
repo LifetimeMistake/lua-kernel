@@ -86,6 +86,7 @@ protect.loadstringSandbox = function(string, context)
     return protect.executeSandbox(func, context)
 end
 
+-- Protect tables from unprivilagd edition
 protect.setreadonly = function(table)
     if type(table) ~= "table" then
         error("Invalid arguments")

@@ -1,5 +1,6 @@
 local assert = {}
 
+-- Compares type of the object with given one and throws error when object type is invalid
 assert.type = function(object, objectType, errorMessage)
     if type(errorMessage) ~= "string" then
         error("Invalid arguments")
@@ -12,6 +13,7 @@ assert.type = function(object, objectType, errorMessage)
     return type(object)
 end
 
+-- Helper for dependency check
 assert.dependency = function(object, dependency)
     if type(object) ~= "table" or type(dependency) ~= "string" then
         error("Invalid arguments")

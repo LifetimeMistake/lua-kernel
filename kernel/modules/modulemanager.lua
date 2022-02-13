@@ -39,7 +39,7 @@ mm.loadModule = function(moduleLoader, loaderContext)
     moduleObject.descriptor = protect.setreadonly(moduleObject.descriptor)
 
     kernel.assert.type(moduleObject.descriptor.init_module, "function", "Loader specified a bad entry point")
-    kernel.assert.type(moduleObject.descriptor.destroy_module, "function", "Loader specified a bad entry point")
+    kernel.assert.type(moduleObject.descriptor.destroy_module, "function", "Loader specified a bad end point")
     kernel.assert.type(moduleObject.descriptor.name, "string", "Loader specified an invalid module name")
     if #moduleObject.descriptor.name == 0 then error("Loader specified an invalid module name") end
 
