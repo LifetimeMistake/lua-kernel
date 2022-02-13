@@ -13,7 +13,8 @@ protect.executeSandbox(func, context, ...)
 -- Can only be ran from a privileged context. 
 protect.loadstringSandbox(string, context)
 
--- Protect tables from unprivilagd edition
+-- Protects tables from unauthorized modifications
+-- This action can not be undone for kernel memory safety
 protect.setreadonly(table)
 ```
 ### kernel/assert.lua
@@ -27,10 +28,12 @@ assert.dependency(object, dependency)
 
 ### kernel/modules/modulemanager.lua
 ```lua
--- Checks if module is correct and loads it into given context, modules should be Unprivilaged
+-- Executes the specified module loader function inside of the specified context
+-- or creates a default one, then registers the module with the kernel
 mm.loadModule(moduleLoader, loaderContext)
 
--- Waiting for LM to describe
+-- Compiles the specified string into Lua bytecode using the default loadstring funtion
+-- inside the specified context or creates a default one, then registers the module with the kernel
 mm.loadstringModule(moduleString, moduleContext) 
 
 -- Triggers module destroy function, if force == true then simply wipes module out.
@@ -84,9 +87,11 @@ vfs.isFileInUse(path)
 -- Returns bool based on existance of exclusive file descriptor for given path
 vfs.isFileLocked(path)
 
--- Basicaly a helper function to get fileDescriptor id's in table for given path.
--- { id = path }
-vfs.getDescriptorId(path)
+-- Returns all open file descriptors for the given path
+vfs.getOpenPathDescriptors(path)
+
+-- Returns the next free file descriptor ID
+vfs.getNextFreeDescriptorId()
 
 -- Creates file descriptor, returns error if exclusive file descriptor for file exists,
 -- or if you want to generate a exclusive file descriptor for already busy file.

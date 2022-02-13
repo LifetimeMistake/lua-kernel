@@ -2,7 +2,7 @@ local kernel = nil
 local vfs = {}
 vfs.nodes = {}           -- path
 vfs.fileDescriptors = {} -- id
--- vfs.mountpoints = {}     -- for later 
+vfs.mountpoints = {}     -- for later 
 -- vfs.ex_fileDescriptors = {} -- exclusive file descryptors waiting for performance update
 vfs.fileModes = {
     READONLY = 0,
@@ -48,16 +48,26 @@ vfs.isFileLocked = function (path)
 end
 
 -- Basicaly a helper function to get fileDescriptor id's for given path.
-vfs.getDescriptorId = function (path)
-    local id = {}
+vfs.getOpenPathDescriptors = function (path)
+    local fds = {}
     for _,v in pairs(vfs.fileDescriptors) do
         if v.path == path then
-            id[v.id] = v.path
+            table.insert(fds, v)
         end
     end
-    return id
+    return fds
 end
 
+vfs.getNextFreeDescriptorId = function ()
+    local last_id = 0
+    while true do
+        if not vfs.fileDescriptors[last_id] then
+            return last_id
+        end
+
+        last_id = last_id + 1
+    end
+end
 
 -- path = file |
 -- mode = vfs.fileModes |
@@ -88,17 +98,8 @@ vfs.createFileDescriptor = function (path, mode, exclusive)
     if vfs.isFileLocked(path) then
         error("File belongs to exclusive fileDescriptor")
     end
-    -- Check for any other exclusive fileDescriptors
-    
-    -- if needed, make some type of algorithm to find free spaces, problems my occur for larger amounts of open files.
-    local id = 0
-    local loop = true
-    while loop do
-        id = id + 1
-        if vfs.fileDescriptors[id] == nil then 
-            loop = false
-        end
-    end
+
+    local id = vfs.getNextFreeDescriptorId()
 
     local fileDescriptor = {
         id = id,
@@ -172,7 +173,6 @@ end
 -- returns a bool based on existance of node with given path
 vfs.fileExists = function(path)
     kernel.assert.type(path, "string", "Invalid arguments")
-
     return vfs.nodes[path] ~= nil
 end
 
