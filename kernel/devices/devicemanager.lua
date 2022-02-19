@@ -127,6 +127,10 @@ dm.deleteDevice = function(majorNumber, minorNumber)
     end
 
     dm.devices[majorNumber][minorNumber] = nil
+
+    if #dm.devices[majorNumber] == 0 then
+        dm.devices[majorNumber] = nil
+    end
 end
 
 -- Returns devices
@@ -135,8 +139,12 @@ dm.getDevices = function()
 end
 
 -- Returns devices with given MjN
-dm.getDevicesByClass = function(majorNumber)
+dm.getDeviceClass = function(majorNumber)
     kernel.assert.type(majorNumber, "number", "Invalid arguments")
+    if not dm.devices[majorNumber] then
+        error("Device class not registered")
+    end
+    
     return dm.devices[majorNumber]
 end
 
