@@ -25,12 +25,16 @@ pathlib.splitPath = function(path)
     return segments
 end
 
+pathlib.isParentOfPath = function(parent, path)
+    return string.sub(path, 1, string.len(parent)) == parent
+end
+
 pathlib.countPathSegments = function(path)
     return #pathlib.splitPath(path)
 end
 
 pathlib.hasRoot = function(path)
-    return string.sub(path, 0, 1) == "/"
+    return string.sub(path, 1, 1) == "/"
 end
 
 pathlib.getBaseName = function(path)

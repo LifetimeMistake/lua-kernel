@@ -126,7 +126,7 @@ vfs.getOpenPathDescriptors = function(path)
 end
 
 -- Device node functionality
-vfs.createDeviceNode = function(path, type, device_majorNumber, device_minorNumber)
+vfs.createDeviceNode = function(path, mountpoint, type, device_majorNumber, device_minorNumber)
     if not vfs.nodeTypeValid(type) then
         error("Invalid node type")
     end
@@ -135,7 +135,8 @@ vfs.createDeviceNode = function(path, type, device_majorNumber, device_minorNumb
         path = path,
         type = type,
         majorNumber = device_majorNumber,
-        minorNumber = device_minorNumber
+        minorNumber = device_minorNumber,
+        mountpoint = mountpoint
     }
 
     vfs.nodes[path] = node
@@ -164,7 +165,24 @@ vfs.getMountpointFromMountPath = function(path)
 end
 
 vfs.getMountpointFromPath = function(path)
-    
+    local possibleMountpoints = {}
+
+    for k,v in pairs(vfs.mountpoints) do
+        if pathlib.isParentOfPath(k, path) then
+            table.insert(possibleMountpoints, v)
+        end
+    end
+
+    if #possibleMountpoints == 0 then
+        error("Path has no known mountpoint")
+    end
+
+    -- Sort the mountpoints by their depth
+    table.sort(possibleMountpoints, function(mp1, mp2)
+        return pathlib.countPathSegments(mp1.path) > pathlib.countPathSegments(mp2.path)
+    end)
+
+    return possibleMountpoints[1]
 end
 
 vfs.getMountpointByDevice = function(deviceNode)
@@ -177,9 +195,24 @@ vfs.getMountpointByDevice = function(deviceNode)
     error("Mountpoint does not exist")
 end
 
+vfs.mountpointIsInUse = function(mountpoint)
+    for k,v in pairs(vfs.fileDescriptors) do
+        if v.mountpoint == mountpoint then
+            return true
+        end
+    end
+
+    return false
+end
+
 vfs.deleteMountpoint = function(path)
     local mountpoint = vfs.getMountpointFromMountPath(path)
-    
+    if vfs.mountpointIsInUse(mountpoint) then
+        error("Mountpoint is in use")
+    end
+
+    vfs.destroyFileDescriptor(mountpoint.fileDescriptor)
+    vfs.mountpoints[mountpoint.path] = nil
 end
 
 vfs.mountpointExistsByPath = function(path)
