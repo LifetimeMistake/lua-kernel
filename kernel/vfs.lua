@@ -285,3 +285,5 @@ vfs.create = function(kernel_ref)
     kernel = kernel_ref
     pathlib = kernel_ref.pathlib
 end
+
+return vfs
