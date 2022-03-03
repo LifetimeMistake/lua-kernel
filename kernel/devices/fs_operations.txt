@@ -3,10 +3,10 @@ releaseFile(device, fd) -> nil
 readFile(device, fd, count, offset) -> (string) data, (number) actual_bytes_read
 writeFile(device, fd, data, count, offset) -> (number) actual_bytes_written
 flushFile(device, fd) -> (number) bytes_flushed
-getFileMetadata(device, path) -> (table)[
+getEntryMetadata(device, path) -> (table)[
     (string) type (file or directory),
     (number) fileSize (number if type is file, otherwise nil)
-] or nil if doesn't exist
+]
 makeDirectory(device, path) -> nil
 listDirectory(device, path) -> (table) fs node metadata table
 moveFsNode(device, path, newPath) -> nil

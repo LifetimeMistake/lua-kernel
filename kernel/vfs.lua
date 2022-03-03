@@ -4,15 +4,25 @@ local pathlib = nil
 local vfs = {}
 vfs.nodes = {}           -- path
 vfs.fileDescriptors = {} -- id
-vfs.mountpoints = {}     -- for later 
-vfs.fileModes = {
+vfs.mountpoints = {}
+vfs.openModes = {
     READONLY = 0,
     WRITEONLY = 1,
     READWRITE = 2
 }
 vfs.nodeTypes = {
-    CHARACTER = 0,
-    FILESYSTEM  = 1
+    FILE = 0,
+    DIRECTORY = 1,
+    CHARACTER_DEVICE = 2,
+    FILESYSTEM_DEVICE  = 3
+}
+vfs.deviceTypes = {
+    CHARACTER_DEVICE = vfs.nodeTypes.CHARACTER_DEVICE,
+    FILESYSTEM_DEVICE = vfs.nodeTypes.FILESYSTEM_DEVICE
+}
+vfs.fsEntryTypes = {
+    FILE = vfs.nodeTypes.FILE,
+    DIRECTORY = vfs.nodeTypes.DIRECTORY
 }
 
 -- High level functions
@@ -37,11 +47,7 @@ vfs.release = function(fd)
 
 end
 
-vfs.getFileInfo = function(path)
-
-end
-
-vfs.getDirectoryInfo = function(path)
+vfs.getEntryInfo = function(path)
 
 end
 
@@ -62,8 +68,8 @@ vfs.getNextFreeDescriptorId = function()
     return free_fd
 end
 
-vfs.createFileDescriptor = function(path, mode, exclusive)
-    if not vfs.fileModeValid(mode) then
+vfs.createFileDescriptor = function(path, mode, exclusive, mountpoint)
+    if not vfs.openModeValid(mode) then
         error("Invalid file descriptor mode")
     end
 
@@ -82,7 +88,8 @@ vfs.createFileDescriptor = function(path, mode, exclusive)
         id = freeDescriptorId,
         path = path,
         mode = mode,
-        exclusive = exclusive
+        exclusive = exclusive,
+        mountpoint = mountpoint
     }
 
     fileDescriptor = kernel.protect.setreadonly(fileDescriptor)
@@ -127,8 +134,8 @@ end
 
 -- Device node functionality
 vfs.createDeviceNode = function(path, mountpoint, type, device_majorNumber, device_minorNumber)
-    if not vfs.nodeTypeValid(type) then
-        error("Invalid node type")
+    if not vfs.deviceNodeTypeValid(type) then
+        error("Invalid device type")
     end
 
     local node = {
@@ -147,13 +154,24 @@ vfs.getDeviceNode = function(path)
     return vfs.nodes[path]
 end
 
-vfs.deleteDeviceNode = function(path)
+vfs.destroyDeviceNode = function(path)
     vfs.nodes[path] = nil
 end
 
 -- Mountpoint functionality
-vfs.createMountpoint = function(mountPath, deviceNode)
+vfs.createMountpoint = function(mountPath, deviceNode, deviceDescriptor, mountPathDescriptor)
+    if vfs.mountpoints[mountPath] then
+        error("Mountpoint at this location already exists")
+    end
 
+    local mountpoint = {
+        path = mountPath,
+        deviceNode = deviceNode,
+        deviceDescriptor = deviceDescriptor, -- Prevents the device node from being modified
+        mountPathDescriptor = mountPathDescriptor -- Prevents the parent mountpoint from being removed
+    }
+
+    vfs.mountpoints[mountPath] = mountpoint
 end
 
 vfs.getMountpointFromMountPath = function(path)
@@ -202,16 +220,26 @@ vfs.mountpointIsInUse = function(mountpoint)
         end
     end
 
+    -- Not sure if we should be checking this or not
+    -- This will for example prevent a mountpoint from being removed
+    -- as long as ANY node exists on top of it (even when not in use)
+    for k,v in pairs(vfs.nodes) do
+        if v.mountpoint == mountpoint then
+            return true
+        end
+    end
+
     return false
 end
 
-vfs.deleteMountpoint = function(path)
+vfs.destroyMountpoint = function(path)
     local mountpoint = vfs.getMountpointFromMountPath(path)
     if vfs.mountpointIsInUse(mountpoint) then
         error("Mountpoint is in use")
     end
 
-    vfs.destroyFileDescriptor(mountpoint.fileDescriptor)
+    vfs.release(mountpoint.deviceDescriptor)
+    vfs.release(mountpoint.mountPathDescriptor)
     vfs.mountpoints[mountpoint.path] = nil
 end
 
@@ -231,18 +259,24 @@ end
 
 -- Filesystem node functionality
 
-vfs.createEntry = function(path, type)
+vfs.getPhysicalDeviceFromPath = function(path)
+    local mountpoint = vfs.getMountpointFromPath(path)
+    local deviceNode = mountpoint.deviceNode
+    return kernel.devicemanager.getDevice(deviceNode.majorNumber, deviceNode.minorNumber)
+end
+
+vfs.createFsEntry = function(path, type)
 
 end
 
-vfs.destroyEntry = function(path, type)
+vfs.destroyFsEntry = function(path)
 
 end
 
 -- Utility functions
 
-vfs.fileModeValid = function(mode)
-    for _,v in pairs(vfs.fileModes) do
+vfs.openModeValid = function(mode)
+    for _,v in pairs(vfs.openModes) do
         if mode == v then
             return true
         end
@@ -251,8 +285,8 @@ vfs.fileModeValid = function(mode)
     return false
 end
 
-vfs.nodeTypeValid = function(type)
-    for _,v in pairs(vfs.nodeTypes) do
+vfs.deviceNodeTypeValid = function(type)
+    for _,v in pairs(vfs.deviceTypes) do
         if type == v then
             return true
         end
@@ -260,6 +294,17 @@ vfs.nodeTypeValid = function(type)
 
     return false
 end
+
+vfs.fsEntryNodeTypeValid = function(type)
+    for _,v in pairs(vfs.fsEntryTypes) do
+        if type == v then
+            return true
+        end
+    end
+
+    return false
+end
+
 
 vfs.create = function(kernel_ref)
     if type(kernel_ref) ~= "table" then

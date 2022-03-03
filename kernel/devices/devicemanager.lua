@@ -69,7 +69,7 @@ dm.getDevice = function(majorNumber, minorNumber)
     kernel.assert.type(minorNumber, "number", "Invalid arguments")
 
     if not dm.isDeviceRegistered(majorNumber, minorNumber) then
-        error("Device is not registered")
+        error("Device is unavailable")
     end
 
     return dm.devices[majorNumber][minorNumber]
