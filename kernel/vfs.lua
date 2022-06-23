@@ -5,21 +5,25 @@ local vfs = {}
 vfs.nodes = {}           -- path
 vfs.fileDescriptors = {} -- id
 vfs.mountpoints = {}
+
 vfs.openModes = {
     READONLY = 0,
     WRITEONLY = 1,
     READWRITE = 2
 }
+
 vfs.nodeTypes = {
     FILE = 0,
     DIRECTORY = 1,
     CHARACTER_DEVICE = 2,
     FILESYSTEM_DEVICE  = 3
 }
+
 vfs.deviceTypes = {
     CHARACTER_DEVICE = vfs.nodeTypes.CHARACTER_DEVICE,
     FILESYSTEM_DEVICE = vfs.nodeTypes.FILESYSTEM_DEVICE
 }
+
 vfs.fsEntryTypes = {
     FILE = vfs.nodeTypes.FILE,
     DIRECTORY = vfs.nodeTypes.DIRECTORY
@@ -28,7 +32,7 @@ vfs.fsEntryTypes = {
 -- High level functions
 
 vfs.open = function(path, mode, exclusive)
-
+    
 end
 
 vfs.read = function(fd, count, offset)
@@ -61,6 +65,7 @@ end
 
 vfs.getNextFreeDescriptorId = function()
     local free_fd = 0
+
     while vfs.fileDescriptors[free_fd] ~= nil do
         free_fd = free_fd + 1
     end
@@ -159,6 +164,7 @@ vfs.destroyDeviceNode = function(path)
 end
 
 -- Mountpoint functionality
+-- umm no checks for nil values...
 vfs.createMountpoint = function(mountPath, deviceNode, deviceDescriptor, mountPathDescriptor)
     if vfs.mountpoints[mountPath] then
         error("Mountpoint at this location already exists")
