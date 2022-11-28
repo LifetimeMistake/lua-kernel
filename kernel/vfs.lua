@@ -63,6 +63,7 @@ end
 
 -- File descriptor functionality
 
+-- It is NOT going to work with absurd amount of open files so this is fine, for now at least.
 vfs.getNextFreeDescriptorId = function()
     local free_fd = 0
 

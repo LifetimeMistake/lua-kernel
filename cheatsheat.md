@@ -70,7 +70,7 @@ dm.initFsDevice(majorNumber, minorNumber, fsOperations)
 dm.deleteDevice(majorNumber, minorNumber)
 
 -- Returns devices
-dm.getDevices
+dm.getDevices()
 
 -- Returns devices with given MjN
 dm.getDevicesByClass(majorNumber)
